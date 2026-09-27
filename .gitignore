@@ -1,0 +1,21 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Dipendenze
+node_modules/
+
+# File web copiati dalla PWA a ogni compilazione (build-www.sh)
+www/
+
+# APK compilati: quello da scaricare sta nel repository della PWA (download/)
+*.apk
+*.aab
+
+# Chiavi di firma: MAI nel repository
+*.keystore
+*.jks

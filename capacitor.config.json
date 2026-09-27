@@ -1,0 +1,8 @@
+{
+  "appId": "it.tecniciausili.mastertutor",
+  "appName": "Mastertutor",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "mastertutor-android",
+  "version": "1.0.15",
+  "private": true,
+  "description": "Mastertutor per tablet Android (APK) — involucro Capacitor dell'app web",
+  "scripts": {
+    "www": "bash build-www.sh",
+    "sync": "npm run www && cap sync android",
+    "apk": "npm run www && cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/android": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}
