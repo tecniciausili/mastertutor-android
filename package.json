@@ -1,6 +1,6 @@
 {
   "name": "mastertutor-android",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "private": true,
   "description": "Mastertutor per tablet Android (APK) — involucro Capacitor dell'app web",
   "scripts": {
