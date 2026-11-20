@@ -2,9 +2,9 @@
 
 Questa cartella trasforma l'app web Mastertutor in un vero **APK** per tablet Android,
 usando [Capacitor](https://capacitorjs.com): l'app web viene impacchettata dentro
-un'app Android nativa. È un involucro della PWA, non una copia: il codice web è uno solo,
-nel repository **mastertutor** (cartella `../versione_pwa`), e `build-www.sh` lo copia ogni
-volta che si compila.
+un'app Android nativa. È un involucro della webapp, non una copia: il codice web è quello della copia di Mastertutor
+nella raccolta **tutte-le-webapp** (`webapp-github/mastertutor`, senza riferimenti ad altri siti), e
+`build-www.sh` lo copia ogni volta che si compila, applicando le modifiche di `modifiche/`.
 
 Questo repository è **mastertutor-android**. Per compilare servono i due repository
 affiancati, con questi nomi di cartella:
@@ -20,7 +20,9 @@ mastertutor/
 | Percorso | Cos'è |
 |---|---|
 | `Mastertutor-<versione>-debug.apk` | Gli APK compilati sul Mac (non versionati: quello da scaricare sta nella PWA, in `download/`) |
-| `build-www.sh` | Prepara `www/` copiando da `../versione_pwa` solo i file del tablet (niente ponte, strumenti, Azure) |
+| `build-www.sh` | Prepara `www/` copiando da `webapp-github/mastertutor` i file del tablet, applica `modifiche/` (controllando con `modifiche/BASE.sha256` che gli originali non siano cambiati), toglie il service worker e scrive il numero di versione |
+| `modifiche/` | **Un anticipatore per ogni tipo di stimolo** (voci, musica, una per presa) e prese a turno: gli stessi file della versione Windows |
+| `strumenti/prova-apk.mjs` | Prova automatica nell'emulatore (o su un tablet con adb) con la presa finta di `versione_windows/strumenti/presa-finta.mjs` |
 | `capacitor.config.json` | Nome, id (`it.tecniciausili.mastertutor`) e cartella web dell'app |
 | `android/` | Il progetto Android generato da Capacitor (apribile in Android Studio) |
 | `www/` | I file web copiati per la compilazione (rigenerati, non versionati) |
@@ -51,7 +53,7 @@ fa sul tablet il lavoro che nella versione web fa il ponte:
 | `tapo/TapoPrese.java` | Sceglie il protocollo, una sessione per presa, comandi in fila, messaggi d'errore in italiano |
 | `tapo/TapoHttp.java`, `tapo/Cripto.java` | Richieste HTTP alla presa e crittografia |
 
-La parte web lo usa tramite `../versione_pwa/js/presa-nativa.js`, che si attiva **solo dentro l'APK**:
+La parte web lo usa tramite `js/presa-nativa.js`, che si attiva **solo dentro l'APK**:
 nel browser e nella PWA resta il collegamento con il ponte.
 
 - **Configurazione**: menu ⋮ → *Configura le prese* (o Area Educatore → Presa). Email e
@@ -101,3 +103,17 @@ apre `android/` in **Android Studio** e si compila da lì (Run o Build → Build
   l'installazione diretta, **non** per la pubblicazione sul Play Store (lì serve un APK/AAB
   firmato con una propria chiave).
 - Il service worker della PWA viene tolto dalla copia web: nell'app i file sono già dentro.
+
+## Versione 1.0.17 (20/11/2026)
+
+- **Un audio anticipatore per ogni tipo di stimolo**: uno per le voci registrate, uno per la musica
+  (YouTube) e uno per ogni presa («anticipatore-ventilatore», …); dove non è scelto suona il generale.
+  Si registrano in Area Educatore → Anticipatore scegliendo per cosa sono.
+- **Ogni presa è uno stimolo a sé**: ogni 4 stimoli una presa, una alla volta a turno, preceduta dal
+  suo anticipatore.
+- Esporta/Importa conserva gli anticipatori scelti.
+- Il codice web viene dalla copia della raccolta (senza riferimenti ad altri siti).
+
+Provata sull'emulatore tablet (Android 14) con la presa finta sul Mac (`10.0.2.2` e l'IP del Mac):
+configurazione di due prese, assegnazione degli anticipatori dai menu, stimolazione con riproduzione
+vera (anticipatori suonati per intero prima di ogni stimolo, prese a turno).
