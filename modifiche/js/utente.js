@@ -206,7 +206,7 @@ const Utente = (() => {
           <div class="intestazione-area">
             <h2 id="titoloModalita"></h2>
             <button type="button" class="btn-secondary btn-piccolo" data-azione="vai-educatore">
-              <i class="bi bi-person-workspace"></i> Educatore
+              <i class="bi bi-gear-fill"></i> Configurazione
             </button>
           </div>
           <div id="contenutoPannello"></div>
@@ -426,7 +426,7 @@ const Utente = (() => {
     if (lista.length === 0) {
       contenitore.innerHTML = `
         <p class="vuoto"><i class="bi bi-inbox"></i> Nessuno stimolo nel gioco.<br>
-        <small>Aggiungili dall'<strong>Area Educatore</strong>.</small></p>`;
+        <small>Aggiungili dalla <strong>Configurazione</strong>.</small></p>`;
       return;
     }
     contenitore.innerHTML = lista.map((el) => `
@@ -820,7 +820,7 @@ const Utente = (() => {
 
     const st = Archivio.getImpostazioni().stimolazione;
     if (tipiDisponibili(st, false).length === 0) {
-      statoSessione('Nessuno stimolo disponibile: aggiungi audio o video nell\'Area Educatore, oppure collega la presa.');
+      statoSessione('Nessuno stimolo disponibile: aggiungi audio o video nella Configurazione, oppure collega la presa.');
       return;
     }
 

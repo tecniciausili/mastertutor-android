@@ -1,0 +1,56 @@
+/* Intestazione senza fascia colorata, con il logo della Lega del Filo d'Oro a sinistra
+   (obiettivo comune alle app della raccolta). Titolo al centro, menu a destra. */
+.app-header {
+  background: #ffffff;
+  color: var(--primary-color);
+  box-shadow: 0 1px 0 #e3e8e7, 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.header-content {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.header-actions-left {
+  justify-self: start;
+  width: auto;
+  gap: 0.75rem;
+}
+
+.logo-lega {
+  display: block;
+  height: 54px;
+  width: auto;
+}
+
+.app-title {
+  color: var(--primary-color);
+}
+
+.btn-menu {
+  justify-self: end;
+}
+
+.btn-menu,
+.btn-user-options {
+  background: #e9f4f2;
+  color: var(--primary-color);
+}
+
+.btn-menu:hover,
+.btn-user-options:hover {
+  background: #d3ebe7;
+}
+
+@media (max-width: 768px) {
+  .logo-lega {
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-lega {
+    height: 32px;
+  }
+}

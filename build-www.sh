@@ -31,6 +31,7 @@ find "$WWW" -name .DS_Store -delete
 }
 cp "$QUI"/modifiche/js/*.js "$WWW/js/"
 cp "$QUI"/modifiche/css/*.css "$WWW/css/"
+mkdir -p "$WWW/assets/img" && cp "$QUI"/modifiche/assets/*.png "$WWW/assets/img/"
 
 python3 - "$QUI/package.json" "$WWW" <<'PY'
 import json, os, re, sys
@@ -48,10 +49,14 @@ def modifica(nome, funzione):
 # Niente service worker nell'APK: i file sono già dentro l'app (nell'app darebbe un errore)
 modifica('index.html', lambda t: re.sub(r'\n[ \t]*<script>(?:(?!</script>).)*serviceWorker(?:(?!</script>).)*</script>', '', t, flags=re.S))
 # Foglio di stile delle modifiche, dopo quello dell'app
-modifica('index.html', lambda t: re.sub(r'(<link rel="stylesheet" href="css/styles\.css[^"]*">)', r'\1\n    <link rel="stylesheet" href="css/anticipatori.css">', t, count=1))
+modifica('index.html', lambda t: re.sub(r'(<link rel="stylesheet" href="css/styles\.css[^"]*">)', r'\1\n    <link rel="stylesheet" href="css/anticipatori.css">\n    <link rel="stylesheet" href="css/intestazione.css">', t, count=1))
 # Numero di versione dell'APK (package.json), anche nel riquadro «Informazioni»
 modifica('js/app.js', lambda t: re.sub(r"versione: '[^']*'", f"versione: '{versione}'", t, count=1))
 modifica('index.html', lambda t: re.sub(r'\?v=[0-9.]+', f'?v={versione}', t))
+# «Area Educatore» si chiama ora «Configurazione» (anche nei file non modificati)
+modifica('index.html', lambda t: t.replace('<i class="bi bi-person-workspace"></i>\n                    <span>Area Educatore</span>', '<i class="bi bi-gear-fill"></i>\n                    <span>Configurazione</span>').replace('<h4>Area Educatore</h4>', '<h4>Configurazione</h4>'))
+modifica('index.html', lambda t: t.replace('<div class="header-actions-left">', '<div class="header-actions-left">\n                <img class="logo-lega" src="assets/img/logo-lega-filo-oro.png" alt="Lega del Filo d\'Oro">', 1))
+modifica('js/configura-prese.js', lambda t: t.replace('<strong>Area Educatore → Presa</strong>', '<strong>Configurazione → Presa</strong>').replace('in Area Educatore → Presa.', 'in Configurazione → Presa.'))
 # Scheda Presa: le prese ora si accendono una alla volta, scelte a caso
 modifica('js/scheda-presa.js', lambda t: t.replace(
     'Se non ne scegli nessuna si accendono tutte quelle configurate.',

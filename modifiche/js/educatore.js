@@ -67,11 +67,11 @@ const Educatore = (() => {
   function apri(contenitore) {
     contenitore.innerHTML = `
       <div class="educatore">
-        <section class="panel pannello-educatore" aria-label="Area Educatore">
+        <section class="panel pannello-educatore" aria-label="Configurazione">
           <div class="intestazione-area">
-            <h2><i class="bi bi-person-workspace"></i> Area Educatore</h2>
+            <h2><i class="bi bi-gear-fill"></i> Configurazione</h2>
             <button type="button" class="btn-secondary btn-piccolo" data-azione="vai-utente">
-              <i class="bi bi-headphones"></i> Area Utente
+              <i class="bi bi-play-circle-fill"></i> Vai all'esercizio
             </button>
           </div>
           <nav class="schede" role="tablist" aria-label="Sezioni">

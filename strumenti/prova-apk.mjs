@@ -43,10 +43,18 @@ verifica('Nessun riferimento ad altri siti nella pagina', !/assistive|aruba/i.te
 await pagina.evaluate(async () => {
   for (const a of await Archivio.audioLista()) await Archivio.audioElimina(a.id);
   localStorage.setItem('mt_impostazioni', '{}');
+  localStorage.setItem('mt_youtube', '[]');
+  await (Capacitor.registerPlugin ? Capacitor.registerPlugin('PresaTapo') : Capacitor.Plugins.PresaTapo).salvaConfigurazione({ account: { email: 'prova@esempio.it' }, prese: [] });
 });
+const paginaAperta = () => pagina.evaluate(() => (document.querySelector('.pannello-educatore') ? 'Configurazione'
+  : document.querySelector('#pannelloUtente') ? 'Esercizio' : '?'));
+await pagina.reload();
+await pagina.waitForLoadState('load');
+await attendi(2500);
+verifica('Apertura senza esercizi → Configurazione', (await paginaAperta()) === 'Configurazione');
 
 // ---------- Due prese ----------
-await clicca('[data-app="educatore"]');
+await pagina.evaluate(() => App.mostraEducatore());
 await clicca('[data-scheda="presa"]');
 await clicca('[data-azione="presa-configura"]');
 await pagina.waitForSelector('.cassetto.active');
@@ -141,6 +149,11 @@ verifica('Mai la stessa categoria due volte di fila', categorie.every((c, i) => 
 verifica('Prima di ogni voce suona anticipatore-voce, per intero', prima((x) => x.startsWith('Voce')).every((p) => p.startsWith('anticipatore-voce (fine')));
 verifica('Prima del ventilatore suona il suo anticipatore', prima((x) => x === 'PRESA Ventilatore').every((p) => p.startsWith('anticipatore-ventilatore (fine')));
 verifica('Prima delle luci suona il loro anticipatore', prima((x) => x === 'PRESA Luci di Natale').every((p) => p.startsWith('anticipatore-luci-di-natale (fine')));
+await pagina.reload();
+await pagina.waitForLoadState('load');
+await attendi(2500);
+verifica('Apertura con esercizi pronti → direttamente all\'esercizio', (await paginaAperta()) === 'Esercizio');
+verifica('Tasto «Configurazione» nell\'esercizio', /Configurazione/.test(await pagina.textContent('[data-azione="vai-educatore"]')));
 verifica('Nessun errore JavaScript', errori.length === 0, errori.join(' | '));
 await dispositivo.close();
 console.log(esiti.every(Boolean) ? '\nTUTTO OK' : '\nCI SONO PROBLEMI');
