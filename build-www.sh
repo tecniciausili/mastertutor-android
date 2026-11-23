@@ -22,7 +22,7 @@ cp -R "$APP/assets" "$WWW/"
 find "$WWW" -name .DS_Store -delete
 
 # Modifiche dell'APK (cartella modifiche/, le stesse della versione Windows): un anticipatore per
-# ogni tipo di stimolo, prese a turno. Prima controllo che gli originali siano quelli su cui sono
+# ogni tipo di stimolo; stimoli scelti a caso per categoria. Prima controllo che gli originali siano quelli su cui sono
 # state fatte: se la webapp è cambiata, le novità vanno riportate nei file di modifiche/js.
 ( cd "$APP" && shasum -a 256 -c --quiet "$QUI/modifiche/BASE.sha256" ) || {
   echo "✗ I file originali in webapp-github/mastertutor sono cambiati dopo le modifiche." >&2
@@ -52,9 +52,9 @@ modifica('index.html', lambda t: re.sub(r'(<link rel="stylesheet" href="css/styl
 # Numero di versione dell'APK (package.json), anche nel riquadro «Informazioni»
 modifica('js/app.js', lambda t: re.sub(r"versione: '[^']*'", f"versione: '{versione}'", t, count=1))
 modifica('index.html', lambda t: re.sub(r'\?v=[0-9.]+', f'?v={versione}', t))
-# Scheda Presa: le prese ora si accendono una alla volta, a turno
+# Scheda Presa: le prese ora si accendono una alla volta, scelte a caso
 modifica('js/scheda-presa.js', lambda t: t.replace(
     'Se non ne scegli nessuna si accendono tutte quelle configurate.',
-    'Se non ne scegli nessuna partecipano tutte quelle configurate. Nella stimolazione si accendono una alla volta, a turno, ognuna preceduta dal suo anticipatore (scheda Anticipatore).'))
+    'Se non ne scegli nessuna partecipano tutte quelle configurate. Nella stimolazione si accendono una alla volta, scelte a caso, ognuna preceduta dal suo anticipatore (scheda Anticipatore).'))
 PY
 echo "www/ pronto ($(find "$WWW" -type f | wc -l | tr -d ' ') file)"

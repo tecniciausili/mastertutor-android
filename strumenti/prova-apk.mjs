@@ -7,6 +7,9 @@
 import { _android as android } from 'playwright-core';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const VERSIONE = JSON.parse(fs.readFileSync(path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'package.json'), 'utf8')).version;
 
 const [SUONI, IP1, IP2] = process.argv.slice(2);
 const esiti = [];
@@ -32,8 +35,8 @@ await pagina.reload();
 await pagina.waitForLoadState('load');
 await attendi(1500);
 
-verifica('APK 1.0.17 «nativo», con la nuova scheda', await pagina.evaluate(() =>
-  APP_CONFIG.versione === '1.0.17' && Util.apk === true && Presa.locale === true && typeof Educatore === 'object'));
+verifica(`APK ${VERSIONE} «nativo», con la nuova scheda`, await pagina.evaluate((v) =>
+  APP_CONFIG.versione === v && Util.apk === true && Presa.locale === true && typeof Educatore === 'object', VERSIONE));
 verifica('Nessun riferimento ad altri siti nella pagina', !/assistive|aruba/i.test(await pagina.content()));
 
 // Dati di partenza puliti (dispositivo di prova)
@@ -97,9 +100,12 @@ const scelte = await pagina.$$eval('#tabellaAnticipatori select', (s) => s.map((
 verifica('Anticipatori assegnati dai menu', scelte.join(', ') === 'Nessun anticipatore, anticipatore-voce, Come il generale, anticipatore-ventilatore, anticipatore-luci-di-natale', scelte.join(', '));
 await pagina.screenshot({ path: path.join(SUONI, 'apk-anticipatori.png') });
 
-// ---------- Stimolazione con riproduzione vera ----------
+// ---------- Stimolazione: categoria a caso, poi stimolo a caso (audio veri, YouTube simulato) ----------
 await pagina.evaluate(() => {
-  Archivio.salvaImpostazioni({ stimolazione: { attesa_min: 1, attesa_max: 1, eventi: { audio: true, youtube: false, presa: true } } });
+  for (const [n, id] of [[1, 'aaaaaaaaaa1'], [2, 'aaaaaaaaaa2']]) {
+    Archivio.aggiungiYoutube({ nome: `Video ${n}`, video_id: id, link: `https://youtu.be/${id}` });
+  }
+  Archivio.salvaImpostazioni({ stimolazione: { attesa_min: 1, attesa_max: 1, eventi: { audio: true, youtube: true, presa: true } } });
   window.__log = [];
   Archivio.audioLista().then((l) => { window.__nomi = new Map(l.map((a) => [a.blob.size, a.nome])); });
   const orig = Riproduttore.riproduciAudio;
@@ -108,23 +114,33 @@ await pagina.evaluate(() => {
     const t0 = performance.now();
     return orig(src, opz).then((e) => { window.__log.push(`${nome} (${e}, ${((performance.now() - t0) / 1000).toFixed(1)} s)`); return e; });
   };
+  Riproduttore.youtubeDisponibile = () => true;
+  Riproduttore.youtubeSbloccato = () => true;
+  Riproduttore.precaricaYoutube = () => {};
+  Riproduttore.riproduciYoutube = (v) => { window.__log.push(`VIDEO ${v.nome}`); return new Promise((r) => setTimeout(() => r('fine'), 300)); };
   const oa = Presa.accendi.bind(Presa);
   Presa.accendi = (ids, s) => { window.__log.push(`PRESA ${Presa.elenco().find((p) => p.id === ids[0])?.nome}`); return oa(ids, s); };
 });
 await clicca('[data-azione="vai-utente"]');
-await pagina.waitForSelector('[data-azione="avvia"]');
+await pagina.waitForSelector('[data-azione="avvia"]', { state: 'attached' });
 await clicca('[data-azione="avvia"]');
 console.log('  …stimolazione in corso (60 s)');
 await attendi(60000);
 await clicca('[data-azione="ferma"]').catch(() => {});
 const log = await pagina.evaluate(() => window.__log);
-console.log('  ' + log.join('\n  '));
+const stimoli = log.filter((x) => /^(Voce|VIDEO|PRESA)/.test(x));
+const categoriaDi = (x) => (x.startsWith('PRESA') ? 'presa' : x.startsWith('VIDEO') ? 'video' : 'voce');
+const categorie = stimoli.map(categoriaDi);
+console.log('  stimoli:', stimoli.map((x) => x.replace(/ \(.*/, '')).join(' → '));
 const prima = (pred) => log.map((x, i) => [x, log[i - 1] || '']).filter(([x]) => pred(x)).map(([, p]) => p);
+verifica('Abbastanza stimoli per giudicare', stimoli.length >= 6, `${stimoli.length} stimoli`);
+const giri = [];
+for (let i = 0; i + 3 <= categorie.length; i += 3) giri.push(categorie.slice(i, i + 3));
+verifica('Ogni giro contiene video, voce e presa', giri.every((g) => new Set(g).size === 3), giri.map((g) => g.join('-')).join(' | '));
+verifica('Mai la stessa categoria due volte di fila', categorie.every((c, i) => i === 0 || c !== categorie[i - 1]));
 verifica('Prima di ogni voce suona anticipatore-voce, per intero', prima((x) => x.startsWith('Voce')).every((p) => p.startsWith('anticipatore-voce (fine')));
 verifica('Prima del ventilatore suona il suo anticipatore', prima((x) => x === 'PRESA Ventilatore').every((p) => p.startsWith('anticipatore-ventilatore (fine')));
 verifica('Prima delle luci suona il loro anticipatore', prima((x) => x === 'PRESA Luci di Natale').every((p) => p.startsWith('anticipatore-luci-di-natale (fine')));
-const prese = log.filter((x) => x.startsWith('PRESA'));
-verifica('Le prese si alternano a turno', prese.length >= 2 && prese.every((x, i) => i === 0 || x !== prese[i - 1]), prese.map((x) => x.slice(6)).join(', '));
 verifica('Nessun errore JavaScript', errori.length === 0, errori.join(' | '));
 await dispositivo.close();
 console.log(esiti.every(Boolean) ? '\nTUTTO OK' : '\nCI SONO PROBLEMI');

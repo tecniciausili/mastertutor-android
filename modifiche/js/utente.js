@@ -18,7 +18,7 @@ const Utente = (() => {
     casuale: {
       titolo: 'Stimolazione casuale',
       icona: 'bi-shuffle',
-      info: 'L\'educatore preme <strong>Avvia</strong>. A intervalli casuali suona l\'audio anticipatore e parte lo stimolo successivo della lista (l\'ordine si cambia trascinando gli stimoli), oppure uno a caso.',
+      info: 'L\'educatore preme <strong>Avvia</strong>. A intervalli casuali suona l\'audio anticipatore e parte uno stimolo: prima si estrae a caso la <strong>categoria</strong> (video, voci, prese), poi uno stimolo a caso di quella categoria.',
     },
     richiesta: {
       titolo: 'Stimolo su richiesta',
@@ -624,18 +624,12 @@ const Utente = (() => {
       <div class="contatori" id="contatori"></div>
       <div class="disponibili" id="disponibili"></div>
       <h4 class="titolo-lista"><i class="bi bi-collection-play"></i> Stimoli nel gioco</h4>
-      <div class="scelta-ordine" role="radiogroup" aria-label="Ordine di audio e video">
-        <span>Audio e video:</span>
-        <label><input type="radio" name="ordineSessione" value="successivo" /> <span>come nella lista</span></label>
-        <label><input type="radio" name="ordineSessione" value="random" /> <span>a caso</span></label>
-      </div>
-      <p class="nota-presa-casuale"><i class="bi bi-plug-fill"></i> Le prese collegate partono ogni ${PRESA_OGNI} stimoli (tre audio o video, poi una presa), una alla volta a turno, ognuna con il suo anticipatore.</p>
+      <p class="nota-presa-casuale"><i class="bi bi-shuffle"></i> A ogni stimolo si estrae a caso una <strong>categoria</strong> tra video YouTube, voci e prese Tapo, poi uno stimolo a caso di quella categoria. La categoria successiva si sceglie tra quelle rimaste: le tre escono tutte prima di ricominciare, e mai la stessa due volte di fila. Dentro una categoria nessuno stimolo si ripete finché non sono usciti tutti.</p>
       <div class="brani-list" id="listaStimoli"></div>
     `;
     const st = Archivio.getImpostazioni().stimolazione;
     ui.pannello.querySelector('#cursoreAttesaMin').value = st.attesa_min;
     ui.pannello.querySelector('#cursoreAttesaMax').value = st.attesa_max;
-    ui.pannello.querySelector(`input[name="ordineSessione"][value="${st.ordine === 'random' ? 'random' : 'successivo'}"]`).checked = true;
     mostraValoriAttesa();
     aggiornaDisponibili();
     aggiornaContatori();
@@ -715,7 +709,7 @@ const Utente = (() => {
       riga(st.eventi.youtube && dati.youtube.length > 0 && yt, 'bi-youtube',
         `Video: ${dati.youtube.length} nel gioco${st.eventi.youtube ? '' : ' (esclusi nei Tempi)'}${dati.youtube.length && !yt ? ' · YouTube non raggiungibile' : ''}`),
       riga(st.eventi.presa && Presa.disponibile(), 'bi-plug-fill',
-        `Prese: ${Presa.disponibile() ? `${elementiPrese().length} · una alla volta, a turno` : 'non collegate'}${st.eventi.presa ? '' : ' (escluse nei Tempi)'}`),
+        `Prese: ${Presa.disponibile() ? `${elementiPrese().length} · una alla volta` : 'non collegate'}${st.eventi.presa ? '' : ' (escluse nei Tempi)'}`),
       riga(true, 'bi-bell-fill', `Anticipatore generale: ${Util.escapeHtml(nomeAnticipatore())}${anticipatoriPropri()}`),
       riga(true, 'bi-stopwatch', `Attesa ${st.attesa_min}–${st.attesa_max} s${prefs.modalita === 'richiesta'
         ? ` · risposta ${st.risposta_timeout ? `entro ${st.risposta_timeout} s` : 'senza limite'}` : ''}`),
@@ -780,25 +774,28 @@ const Utente = (() => {
     return tipi;
   }
 
-  // Ogni quanti stimoli eseguiti parte la presa: con 4 escono tre audio/video, poi la presa
-  const PRESA_OGNI = 4;
-
-  // Prossimo stimolo della sessione tra quelli dei tipi disponibili adesso.
-  // AUDIO e VIDEO vanno a giri: nessuno si ripete finché non sono usciti tutti gli altri
-  // (in ordine di lista, o mescolati a ogni giro se scelto "a caso").
-  // La PRESA non dipende dal caso: parte a cadenza fissa, ogni PRESA_OGNI stimoli eseguiti
-  // (eseguitiDopoPresa = audio/video eseguiti dall'ultima presa). Se non ci sono audio
-  // o video disponibili, esce la presa.
-  function prossimoStimolo(giro, giroPrese, tipi, casuale, eseguitiDopoPresa) {
-    const disponibili = stimoliInGioco().filter((el) => tipi.includes(el.tipo));
-    const prese = disponibili.filter((el) => el.tipo === 'presa');
-    const altri = disponibili.filter((el) => el.tipo !== 'presa');
-    if (prese.length && (altri.length === 0 || eseguitiDopoPresa >= PRESA_OGNI - 1)) {
-      // Più prese: una alla volta, a turno, nell'ordine della lista
-      return giroPrese.prossimo(prese, (lista) => [...lista], { seguiOrdine: true });
+  // Prossimo stimolo della sessione, in due estrazioni:
+  //  1. una CATEGORIA a caso tra quelle con stimoli disponibili adesso: video YouTube ('youtube'),
+  //     voci ('audio'), prese Tapo ('presa'). La successiva si sceglie tra quelle rimaste: le
+  //     categorie escono tutte prima di ricominciare un giro, e mai la stessa due volte di fila;
+  //  2. uno STIMOLO a caso di quella categoria: nessuno si ripete finché non sono usciti tutti.
+  // Una categoria vuota o non disponibile (nessun video, prese scollegate) viene saltata.
+  function prossimoStimolo(giroCategorie, giriStimoli, tipi) {
+    const perCategoria = new Map();
+    for (const el of stimoliInGioco().filter((e) => tipi.includes(e.tipo))) {
+      if (!perCategoria.has(el.tipo)) {
+        perCategoria.set(el.tipo, []);
+      }
+      perCategoria.get(el.tipo).push(el);
     }
-    // In ordine di lista: se l'educatore riordina a sessione avviata, vale da subito
-    return giro.prossimo(altri, (lista) => (casuale ? Util.mescola(lista) : [...lista]), { seguiOrdine: !casuale });
+    if (perCategoria.size === 0) {
+      return null;
+    }
+    const categoria = giroCategorie.prossimo([...perCategoria.keys()], Util.mescola);
+    if (!giriStimoli.has(categoria)) {
+      giriStimoli.set(categoria, Util.creaGiro((e) => e.chiave));
+    }
+    return giriStimoli.get(categoria).prossimo(perCategoria.get(categoria), Util.mescola);
   }
 
 
@@ -912,10 +909,8 @@ const Utente = (() => {
     const suRichiesta = prefs.modalita === 'richiesta';
     const record = sessione.record;
     let youtubeEscluso = false;
-    const giro = Util.creaGiro((e) => e.chiave);
-    const giroPrese = Util.creaGiro((e) => e.chiave);
-    let ordineGiro = null;   // 'random' o 'successivo': se cambia a sessione avviata, nuovo giro
-    let eseguitiDopoPresa = 0;   // audio/video eseguiti dall'ultima presa (cadenza PRESA_OGNI)
+    const giroCategorie = Util.creaGiro((categoria) => categoria);   // 'youtube' | 'audio' | 'presa'
+    const giriStimoli = new Map();   // categoria → giro dei suoi stimoli
     let nota = '';   // esito del giro precedente, mostrato durante l'attesa
 
     // iPad/iPhone: YouTube parte da solo solo dopo un primo tocco sul video
@@ -956,11 +951,7 @@ const Utente = (() => {
 
       // 2. Scelgo subito lo stimolo: se è un video si carica (muto, nascosto)
       //    mentre suona l'anticipatore, così alla fine parte senza attese
-      if (st.ordine !== ordineGiro) {
-        ordineGiro = st.ordine;
-        giro.ricomincia();
-      }
-      const el = prossimoStimolo(giro, giroPrese, tipi, st.ordine === 'random', eseguitiDopoPresa);
+      const el = prossimoStimolo(giroCategorie, giriStimoli, tipi);
       if (!el) {
         continue;
       }
@@ -1007,8 +998,6 @@ const Utente = (() => {
       // 5. Stimolo
       statoSessione(`Stimolo: ${el.nome}`);
       const esito = await eseguiStimolo(el, { maxSecondi: limiteDurata(el, st.durata_max), segnale });
-      // Conta ogni stimolo mandato in esecuzione (anche se non è andato a buon fine)
-      eseguitiDopoPresa = el.tipo === 'presa' ? 0 : eseguitiDopoPresa + 1;
       if (esito !== 'errore') {
         record.stimoli++;
         record.per_tipo[el.tipo]++;

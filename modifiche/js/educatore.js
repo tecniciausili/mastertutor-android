@@ -1170,7 +1170,7 @@ const Educatore = (() => {
       : 'nessuno nel gioco: aggiungili nella scheda Audio', !attivi.length);
     scrivi('youtube', nVideo ? `${nVideo} nel gioco` : 'nessuno nel gioco: aggiungili nella scheda YouTube', !nVideo);
     scrivi('presa', Presa.disponibile()
-      ? `${Presa.elenco().length} ${Presa.elenco().length === 1 ? 'presa' : 'prese, a turno'} · resta accesa ${secondi} s`
+      ? `${Presa.elenco().length} ${Presa.elenco().length === 1 ? 'presa' : 'prese'} · resta accesa ${secondi} s`
       : 'non collegata: configurala nella scheda Presa', !Presa.disponibile());
   }
 
