@@ -21,45 +21,28 @@ cp -R "$APP/js" "$WWW/"
 cp -R "$APP/assets" "$WWW/"
 find "$WWW" -name .DS_Store -delete
 
-# Modifiche dell'APK (cartella modifiche/, le stesse della versione Windows): un anticipatore per
-# ogni tipo di stimolo; stimoli scelti a caso per categoria. Prima controllo che gli originali siano quelli su cui sono
-# state fatte: se la webapp è cambiata, le novità vanno riportate nei file di modifiche/js.
-( cd "$APP" && shasum -a 256 -c --quiet "$QUI/modifiche/BASE.sha256" ) || {
-  echo "✗ I file originali in webapp-github/mastertutor sono cambiati dopo le modifiche." >&2
-  echo "  Riporta le novità nei file di modifiche/js e aggiorna modifiche/BASE.sha256." >&2
-  exit 1
-}
-cp "$QUI"/modifiche/js/*.js "$WWW/js/"
-cp "$QUI"/modifiche/css/*.css "$WWW/css/"
-mkdir -p "$WWW/assets/img" && cp "$QUI"/modifiche/assets/*.png "$WWW/assets/img/"
+# Le novità comuni (anticipatori per tipo di stimolo, stimoli a caso per categoria, apertura
+# sull'esercizio, «Configurazione», intestazione con il logo) sono già nella webapp della raccolta.
 
 python3 - "$QUI/package.json" "$WWW" <<'PY'
 import json, os, re, sys
 versione = json.load(open(sys.argv[1]))['version']
 www = sys.argv[2]
 
-def modifica(nome, funzione):
+def modifica(nome, funzione, cerca=None):
+    # cerca: se indicato basta che il testo ci sia (la modifica può non cambiare nulla,
+    # per esempio quando la webapp ha già lo stesso numero di versione)
     p = os.path.join(www, nome)
     testo = open(p, encoding='utf-8').read()
     nuovo = funzione(testo)
-    if nuovo == testo:
+    if (cerca is None and nuovo == testo) or (cerca is not None and not re.search(cerca, testo)):
         sys.exit(f'{nome}: modifica non applicata')
     open(p, 'w', encoding='utf-8').write(nuovo)
 
 # Niente service worker nell'APK: i file sono già dentro l'app (nell'app darebbe un errore)
 modifica('index.html', lambda t: re.sub(r'\n[ \t]*<script>(?:(?!</script>).)*serviceWorker(?:(?!</script>).)*</script>', '', t, flags=re.S))
-# Foglio di stile delle modifiche, dopo quello dell'app
-modifica('index.html', lambda t: re.sub(r'(<link rel="stylesheet" href="css/styles\.css[^"]*">)', r'\1\n    <link rel="stylesheet" href="css/anticipatori.css">\n    <link rel="stylesheet" href="css/intestazione.css">', t, count=1))
 # Numero di versione dell'APK (package.json), anche nel riquadro «Informazioni»
-modifica('js/app.js', lambda t: re.sub(r"versione: '[^']*'", f"versione: '{versione}'", t, count=1))
-modifica('index.html', lambda t: re.sub(r'\?v=[0-9.]+', f'?v={versione}', t))
-# «Area Educatore» si chiama ora «Configurazione» (anche nei file non modificati)
-modifica('index.html', lambda t: t.replace('<i class="bi bi-person-workspace"></i>\n                    <span>Area Educatore</span>', '<i class="bi bi-gear-fill"></i>\n                    <span>Configurazione</span>').replace('<h4>Area Educatore</h4>', '<h4>Configurazione</h4>'))
-modifica('index.html', lambda t: t.replace('<div class="header-actions-left">', '<div class="header-actions-left">\n                <img class="logo-lega" src="assets/img/logo-lega-filo-oro.png" alt="Lega del Filo d\'Oro">', 1))
-modifica('js/configura-prese.js', lambda t: t.replace('<strong>Area Educatore → Presa</strong>', '<strong>Configurazione → Presa</strong>').replace('in Area Educatore → Presa.', 'in Configurazione → Presa.'))
-# Scheda Presa: le prese ora si accendono una alla volta, scelte a caso
-modifica('js/scheda-presa.js', lambda t: t.replace(
-    'Se non ne scegli nessuna si accendono tutte quelle configurate.',
-    'Se non ne scegli nessuna partecipano tutte quelle configurate. Nella stimolazione si accendono una alla volta, scelte a caso, ognuna preceduta dal suo anticipatore (scheda Anticipatore).'))
+modifica('js/app.js', lambda t: re.sub(r"versione: '[^']*'", f"versione: '{versione}'", t, count=1), r"versione: '[^']*'")
+modifica('index.html', lambda t: re.sub(r'\?v=[0-9.]+', f'?v={versione}', t), r'\?v=[0-9.]+')
 PY
 echo "www/ pronto ($(find "$WWW" -type f | wc -l | tr -d ' ') file)"

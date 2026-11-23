@@ -4,7 +4,7 @@ Questa cartella trasforma l'app web Mastertutor in un vero **APK** per tablet An
 usando [Capacitor](https://capacitorjs.com): l'app web viene impacchettata dentro
 un'app Android nativa. È un involucro della webapp, non una copia: il codice web è quello della copia di Mastertutor
 nella raccolta **tutte-le-webapp** (`webapp-github/mastertutor`, senza riferimenti ad altri siti), e
-`build-www.sh` lo copia ogni volta che si compila, applicando le modifiche di `modifiche/`.
+`build-www.sh` lo copia ogni volta che si compila.
 
 Questo repository è **mastertutor-android**. Per compilare servono i due repository
 affiancati, con questi nomi di cartella:
@@ -20,8 +20,7 @@ mastertutor/
 | Percorso | Cos'è |
 |---|---|
 | `Mastertutor-<versione>-debug.apk` | Gli APK compilati sul Mac (non versionati: quello da scaricare sta nella PWA, in `download/`) |
-| `build-www.sh` | Prepara `www/` copiando da `webapp-github/mastertutor` i file del tablet, applica `modifiche/` (controllando con `modifiche/BASE.sha256` che gli originali non siano cambiati), toglie il service worker e scrive il numero di versione |
-| `modifiche/` | **Un anticipatore per ogni tipo di stimolo** (voci, musica, una per presa) e prese a turno: gli stessi file della versione Windows |
+| `build-www.sh` | Prepara `www/` copiando da `webapp-github/mastertutor` i file del tablet, toglie il service worker e scrive il numero di versione. Le novità (anticipatori per tipo di stimolo, stimoli a caso per categoria, apertura sull'esercizio, intestazione con il logo) sono nella webapp della raccolta: dal 23/11/2026 non c'è più la cartella `modifiche/` |
 | `strumenti/prova-apk.mjs` | Prova automatica nell'emulatore (o su un tablet con adb) con la presa finta di `versione_windows/strumenti/presa-finta.mjs` |
 | `capacitor.config.json` | Nome, id (`it.tecniciausili.mastertutor`) e cartella web dell'app |
 | `android/` | Il progetto Android generato da Capacitor (apribile in Android Studio) |
