@@ -131,3 +131,12 @@ Le stesse novità della webapp della raccolta (il codice web viene da lì):
 - **Logo** senza la riga «Insieme oltre il buio e il silenzio».
 
 Provata nel browser e nell'app Windows (stesso codice web); non ancora sull'emulatore.
+
+## Versione 1.0.22 (24/11/2026)
+
+- Le configurazioni (una per utente) si gestiscono dalla **pagina dell'esercizio**: elenco delle
+  configurazioni (toccandone una l'esercizio diventa il suo) e tre tasti, **Nuova** (da capo, poi apre la
+  Configurazione), **Modifica** (apre la Configurazione di quella scelta) ed **Elimina**.
+- In cima alla Configurazione resta solo «Configurazione di <nome>» con **Rinomina**.
+
+Provata nel browser e nell'app Windows (stesso codice web).
