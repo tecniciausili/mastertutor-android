@@ -116,3 +116,18 @@ apre `android/` in **Android Studio** e si compila da lì (Run o Build → Build
 Provata sull'emulatore tablet (Android 14) con la presa finta sul Mac (`10.0.2.2` e l'IP del Mac):
 configurazione di due prese, assegnazione degli anticipatori dai menu, stimolazione con riproduzione
 vera (anticipatori suonati per intero prima di ogni stimolo, prese a turno).
+
+## Versione 1.0.21 (24/11/2026)
+
+Le stesse novità della webapp della raccolta (il codice web viene da lì):
+
+- **Una configurazione per ogni utente**: in cima alla Configurazione si sceglie l'utente; «Nuova» ne
+  crea una (vuota o copia di quella attuale), «Rinomina» ed «Elimina» agiscono su quella scelta. Ognuna
+  ha i suoi audio, video, anticipatori, tempi e registro; le prese sono comuni a tutte. I dati delle
+  versioni precedenti diventano «Utente 1».
+- **Scheda Presa**: elenco delle prese in funzione con «Prova» ed «Elimina» (la password salvata resta).
+  «Configura le prese» resta anche nel menu laterale.
+- **Esercizio**: tolti i cursori dell'attesa tra gli stimoli (si regola solo in Configurazione → Tempi).
+- **Logo** senza la riga «Insieme oltre il buio e il silenzio».
+
+Provata nel browser e nell'app Windows (stesso codice web); non ancora sull'emulatore.
