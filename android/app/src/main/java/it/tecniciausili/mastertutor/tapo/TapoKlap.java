@@ -48,13 +48,15 @@ final class TapoKlap implements TapoDispositivo {
 
         TapoHttp.Risposta hs1 = TapoHttp.post(ip, "/app/handshake1", locale, null, false, TIMEOUT_MS);
         if (hs1.status == 403) {
-            throw new Exception("403 Forbidden - Attiva \"Compatibilità terze parti\" nell'app Tapo");
+            throw new Exception("HTTP 403: compatibilità con terze parti spenta");
         }
         if (hs1.status != 200) {
             throw new Exception("Handshake1 fallito: HTTP " + hs1.status);
         }
-        if (hs1.corpo.length < 48) {
-            throw new Exception("Handshake1: risposta troppo corta");
+        // Risposta giusta: 16 byte di seme e 32 di hash. Altro (pagina HTML, vuota...) vuol dire
+        // che la presa non parla KLAP: con i firmware 1.4.x succede se è spenta la compatibilità
+        if (hs1.corpo.length != 48) {
+            throw new Exception("KLAP non disponibile (risposta di " + hs1.corpo.length + " byte)");
         }
         byte[] remoto = Arrays.copyOfRange(hs1.corpo, 0, 16);
         byte[] hashServer = Arrays.copyOfRange(hs1.corpo, 16, 48);

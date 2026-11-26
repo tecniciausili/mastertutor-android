@@ -140,3 +140,22 @@ Provata nel browser e nell'app Windows (stesso codice web); non ancora sull'emul
 - In cima alla Configurazione resta solo «Configurazione di <nome>» con **Rinomina**.
 
 Provata nel browser e nell'app Windows (stesso codice web).
+
+## Versione 1.0.24 (26/11/2026) — prese Tapo P110 nuove
+
+Le P110 con firmware 1.4.x (2026) non si accendevano dall'app, mentre col telefono funzionavano. Due cause:
+
+- dopo l'accensione la presa **non avvia il servizio locale** (porta 80) finché non riceve il messaggio
+  di «scoperta» che manda l'app Tapo del telefono (UDP, porta 20002): senza, per 8-9 minuti rifiuta i
+  collegamenti. Ora Mastertutor manda la scoperta prima di collegarsi (`TapoScoperta.java`) e, se la presa
+  sta ancora partendo, riprova per circa 15 secondi;
+- con la **«Compatibilità con terze parti»** spenta nell'app Tapo la presa usa il nuovo protocollo TPAP,
+  che nessun programma esterno può usare. Ora lo riconosce e lo dice: nell'app Tapo del telefono
+  **Io → Servizi di terze parti → Compatibilità con terze parti**, attivarla, poi staccare e riattaccare la presa.
+
+Inoltre KLAP usa una connessione nuova per ogni richiesta (come già il protocollo AES) e i messaggi
+d'errore non scambiano più una presa che non parla KLAP per «password sbagliata».
+Stesse modifiche della versione Windows, tradotte in Java (`TapoPrese.java`, `TapoKlap.java`).
+Numero di versione allineato alla webapp (1.0.24).
+
+Compilata; la logica è provata nella versione Windows con la presa finta. Non ancora su tablet con una P110 vera.
